@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lamp Login Animation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #000;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            overflow: auto;
+            position: relative;
+        }
+
+        /* خلفية موحدة */
+        .background-light {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .background-light.active {
+            opacity: 1;
+        }
+
+        /* الذباب في الخلفية */
+        .background-fireflies {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .background-fireflies.active {
+            opacity: 1;
+        }
+
+        .bg-firefly {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #ffeb3b;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ffeb3b;
+            animation: bgFloat 8s infinite ease-in-out;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 16px 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* اللمبة في الأعلى */
+        .lamp-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            min-height: 0;
+            position: relative;
+        }
+
+        .lamp-container {
+            position: relative;
+            width: 300px;
+            height: clamp(70px, 14vh, 130px);
+        }
+
+        /* المفتاح: وسط الشاشة في البداية، ثم يمشي للجنب */
+        .key-btn {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: left 0.9s cubic-bezier(0.65, 0, 0.35, 1),
+                        top 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .key-btn svg {
+            width: 90px;
+            height: 90px;
+            filter: drop-shadow(0 0 12px rgba(255, 235, 59, 0.45));
+            transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1), filter 0.3s ease;
+            animation: keyFloat 3s ease-in-out infinite;
+        }
+
+        .key-btn:hover svg {
+            filter: drop-shadow(0 0 22px rgba(255, 235, 59, 0.9));
+        }
+
+        .key-btn:focus-visible {
+            outline: 2px solid #ffeb3b;
+            outline-offset: 8px;
+            border-radius: 12px;
+        }
+
+        @keyframes keyFloat {
+            0%, 100% { margin-top: 0; }
+            50% { margin-top: -8px; }
+        }
+
+        /* وضع التشغيل: المفتاح يمشي للجنب ويتدور */
+        .key-btn.on {
+            left: calc(50% + 270px);
+        }
+
+        .key-btn.on svg {
+            transform: rotate(-90deg);
+            animation: none;
+        }
+
+        /* رأس المصباح */
+        .lamp-head {
+            position: absolute;
+            width: clamp(90px, 18vh, 168px);
+            height: clamp(70px, 14vh, 130px);
+            background: radial-gradient(ellipse at center, #ffeb3b, #fbc02d);
+            border-radius: 50% 50% 45% 45%;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 40px rgba(255, 235, 59, 0.8),
+                        0 0 80px rgba(255, 193, 7, 0.5);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 5;
+        }
+
+        .lamp-head.active {
+            opacity: 1;
+            animation: lampDrop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1),
+                       lampPulse 3s ease-in-out 0.9s infinite;
+        }
+
+        .lamp-head::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 35% 35%, rgba(255, 255, 255, 0.4), transparent);
+            border-radius: 50% 50% 45% 45%;
+        }
+
+        @keyframes lampDrop {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-60px) scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+        }
+
+        @keyframes lampPulse {
+            0%, 100% {
+                box-shadow: 0 0 40px rgba(255, 235, 59, 0.8),
+                            0 0 80px rgba(255, 193, 7, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 60px rgba(255, 235, 59, 0.9),
+                            0 0 120px rgba(255, 193, 7, 0.7);
+            }
+        }
+
+        /* إضاءة اللمبة */
+        .light-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(ellipse 250px 350px at center, rgba(255, 235, 59, 0.4), transparent);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 0;
+        }
+
+        .light-glow.active {
+            opacity: 1;
+        }
+
+        /* رسالة التعليمات */
+        .instruction {
+            position: fixed;
+            top: calc(50% + 100px);
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffeb3b;
+            font-size: 14px;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+            text-align: center;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .instruction.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* نموذج اللوجن - الأسفل */
+        .form-section {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 12px 20px 0;
+        }
+
+        .form-wrapper {
+            width: 100%;
+            max-width: 380px;
+            background: rgba(30, 30, 30, 0.95);
+            padding: 28px 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 235, 59, 0.1);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(30px);
+            transition: all 0.5s ease;
+        }
+
+        .form-wrapper.active {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        .welcome-text {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .welcome-text h1 {
+            color: #fff;
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+
+        .welcome-text p {
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .input-group {
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(60, 60, 60, 0.8);
+            border: 1px solid rgba(255, 235, 59, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input::placeholder {
+            color: #888;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            background: rgba(60, 60, 60, 0.9);
+            border-color: #ffeb3b;
+            box-shadow: 0 0 20px rgba(255, 235, 59, 0.2);
+        }
+
+        .input-group input:invalid:not(:placeholder-shown) {
+            border-color: #ff6b6b;
+        }
+
+        .input-group input.masked {
+            -webkit-text-security: disc;
+            text-security: disc;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 11px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* عين إظهار كلمة المرور */
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .toggle-password:hover {
+            color: #ffeb3b;
+        }
+
+        /* Remember Me و Forgot Password */
+        .options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            font-size: 12px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .remember-me input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #ffeb3b;
+        }
+
+        .remember-me label {
+            color: #aaa;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-me label:hover {
+            color: #ffeb3b;
+        }
+
+        .forgot-password {
+            background: none;
+            border: none;
+            color: #ffeb3b;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            font-size: 12px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .forgot-password:hover {
+            color: #fff;
+        }
+
+        .sign-in-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ffeb3b, #fbc02d);
+            color: #1a1a1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 14px 0 10px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .sign-in-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 235, 59, 0.4);
+        }
+
+        .back-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(60, 60, 60, 0.8);
+            color: #aaa;
+            border: 1px solid rgba(255, 235, 59, 0.2);
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .back-btn:hover {
+            background: rgba(60, 60, 60, 0.9);
+            color: #ffeb3b;
+        }
+
+        /* نموذج Forgot Password */
+        .forgot-form {
+            display: none;
+        }
+
+        .forgot-form.active {
+            display: block;
+        }
+
+        .login-form {
+            display: block;
+        }
+
+        .login-form.hidden {
+            display: none;
+        }
+
+        .email-info {
+            background: rgba(255, 235, 59, 0.1);
+            border: 1px solid rgba(255, 235, 59, 0.3);
+            color: #ffeb3b;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        .email-info.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .key-btn.on {
+                left: calc(100% - 55px);
+                top: 60px;
+            }
+
+            .key-btn.on svg {
+                width: 60px;
+                height: 60px;
+            }
+
+            .form-wrapper {
+                width: 90%;
+                padding: 22px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- الخلفية الموحدة -->
+    <div class="background-light" id="backgroundLight"></div>
+    <div class="background-fireflies" id="backgroundFireflies"></div>
+
+    <!-- المفتاح -->
+    <button type="button" class="key-btn" id="lampKey" aria-label="Toggle light">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+                <linearGradient id="keyGold" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#fff176"/>
+                    <stop offset="1" stop-color="#f9a825"/>
+                </linearGradient>
+            </defs>
+            <g fill="url(#keyGold)" stroke="#b8860b" stroke-width="1.5" stroke-linejoin="round">
+                <path fill-rule="evenodd" d="M30 8a22 22 0 1 0 0 44a22 22 0 0 0 0-44zm0 14a8 8 0 1 1 0 16a8 8 0 0 1 0-16z"/>
+                <rect x="26" y="50" width="8" height="46" rx="2"/>
+                <rect x="34" y="68" width="14" height="7" rx="1.5"/>
+                <rect x="34" y="82" width="10" height="7" rx="1.5"/>
+            </g>
+        </svg>
+    </button>
+
+    <!-- الحاوية الرئيسية -->
+    <div class="container">
+        <!-- اللمبة في الأعلى -->
+        <div class="lamp-section">
+            <div class="lamp-container">
+                <div class="light-glow" id="lightGlow"></div>
+                <div class="lamp-head" id="lampHead"></div>
+            </div>
+        </div>
+
+        <!-- نموذج اللوجن في الأسفل -->
+        <div class="form-section">
+            <div class="form-wrapper" id="formWrapper">
+                <!-- Login Form -->
+                <div class="login-form" id="loginForm">
+                    <div class="welcome-text">
+                        <h1>Welcome Back</h1>
+                        <p>Enter your details to access your account</p>
+                    </div>
+
+                    <form id="loginFormElement" autocomplete="off">
+                        <div class="input-group">
+                            <input type="text" placeholder="Username" id="username" name="lamp-user" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+                        </div>
+
+                        <div class="input-group">
+                            <input type="text" inputmode="email" name="lamp-mail" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gmail (example@gmail.com)" id="emailInput" required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}">
+                            <span class="error-message" id="emailError">Please enter a valid email with @</span>
+                        </div>
+
+                        <div class="input-group">
+                            <input type="password" placeholder="Password" id="passwordInput" name="lamp-pass" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+                            <button type="button" class="toggle-password" id="togglePassword">👁️</button>
+                        </div>
+
+                        <div class="options">
+                            <div class="remember-me">
+                                <input type="checkbox" id="rememberMe">
+                                <label for="rememberMe">Remember me</label>
+                            </div>
+                            <button type="button" class="forgot-password" id="forgotPasswordBtn">Forgot Password?</button>
+                        </div>
+
+                        <button type="submit" class="sign-in-btn">Sign In</button>
+                    </form>
+                </div>
+
+                <!-- Forgot Password Form -->
+                <div class="forgot-form" id="forgotForm">
+                    <div class="welcome-text">
+                        <h1>Reset Password</h1>
+                        <p>Enter your email to receive a reset link</p>
+                    </div>
+
+                    <form id="forgotFormElement" autocomplete="off">
+                        <div class="input-group">
+                            <input type="text" inputmode="email" name="lamp-reset-mail" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Enter your gmail (example@gmail.com)" id="resetEmailInput" required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}">
+                            <span class="error-message" id="resetEmailError">Please enter a valid email with @</span>
+                        </div>
+
+                        <div class="email-info" id="emailInfo">
+                            📧 A reset link has been sent to your email!
+                        </div>
+
+                        <button type="submit" class="sign-in-btn">Send Reset Link</button>
+                        <button type="button" class="back-btn" id="backToLoginBtn">← Back to Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isLampOn = false;
+
+        // عناصر DOM
+        const lampKey = document.getElementById('lampKey');
+        const lampHead = document.getElementById('lampHead');
+        const lightGlow = document.getElementById('lightGlow');
+        const backgroundLight = document.getElementById('backgroundLight');
+        const backgroundFireflies = document.getElementById('backgroundFireflies');
+        const formWrapper = document.getElementById('formWrapper');
+        
+        // Form elements
+        const loginForm = document.getElementById('loginForm');
+        const forgotForm = document.getElementById('forgotForm');
+        const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+        const backToLoginBtn = document.getElementById('backToLoginBtn');
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('passwordInput');
+        const loginFormElement = document.getElementById('loginFormElement');
+        const forgotFormElement = document.getElementById('forgotFormElement');
+        const emailInput = document.getElementById('emailInput');
+        const resetEmailInput = document.getElementById('resetEmailInput');
+        const emailInfo = document.getElementById('emailInfo');
+        const emailError = document.getElementById('emailError');
+        const resetEmailError = document.getElementById('resetEmailError');
+
+        // عند الضغط على المفتاح
+        lampKey.addEventListener('click', function() {
+            isLampOn = !isLampOn;
+            lampKey.classList.toggle('on', isLampOn);
+
+            if (isLampOn) {
+                // تشغيل النور
+                lampHead.classList.add('active');
+                lightGlow.classList.add('active');
+                backgroundLight.classList.add('active');
+                backgroundFireflies.classList.add('active');
+                formWrapper.classList.add('active');
+
+                // إنشاء الذباب
+                createBackgroundFireflies();
+            } else {
+                // إطفاء النور
+                lampHead.classList.remove('active');
+                lightGlow.classList.remove('active');
+                backgroundLight.classList.remove('active');
+                backgroundFireflies.classList.remove('active');
+                formWrapper.classList.remove('active');
+
+                // حذف الذباب
+                backgroundFireflies.innerHTML = '';
+            }
+        });
+
+        // إنشاء الذباب في الخلفية
+        function createBackgroundFireflies() {
+            backgroundFireflies.innerHTML = '';
+            const firefliesCount = 20;
+
+            function createFirefly() {
+                const firefly = document.createElement('div');
+                firefly.className = 'bg-firefly';
+                
+                const randomX = Math.random() * window.innerWidth;
+                const randomY = Math.random() * window.innerHeight;
+                const randomDelay = Math.random() * 3;
+                const randomDuration = 5 + Math.random() * 5;
+                
+                firefly.style.left = randomX + 'px';
+                firefly.style.top = randomY + 'px';
+                firefly.style.animationDelay = randomDelay + 's';
+                firefly.style.animationDuration = randomDuration + 's';
+                
+                backgroundFireflies.appendChild(firefly);
+                
+                setTimeout(() => {
+                    if (isLampOn && firefly.parentElement) {
+                        firefly.remove();
+                        createFirefly();
+                    }
+                }, randomDuration * 1000);
+            }
+
+            for (let i = 0; i < firefliesCount; i++) {
+                setTimeout(() => {
+                    if (isLampOn) {
+                        createFirefly();
+                    }
+                }, i * 200);
+            }
+        }
+
+        // Password: masked text field so the browser doesn't offer saved passwords
+        const canMask = !!(window.CSS && CSS.supports && CSS.supports('-webkit-text-security', 'disc'));
+        if (canMask) {
+            passwordInput.type = 'text';
+            passwordInput.classList.add('masked');
+        } else {
+            // fallback: readonly until focus
+            passwordInput.setAttribute('readonly', '');
+            passwordInput.addEventListener('focus', () => passwordInput.removeAttribute('readonly'));
+        }
+
+        // Toggle Password Visibility
+        togglePassword.addEventListener('click', function(e) {
+            e.preventDefault();
+            let hidden;
+            if (canMask) {
+                hidden = passwordInput.classList.toggle('masked');
+            } else {
+                passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+                hidden = passwordInput.type === 'password';
+            }
+            togglePassword.textContent = hidden ? '👁️' : '🙈';
+        });
+
+        // Email Validation
+        emailInput.addEventListener('input', function() {
+            if (this.value && !this.value.includes('@')) {
+                emailError.classList.add('show');
+            } else {
+                emailError.classList.remove('show');
+            }
+        });
+
+        resetEmailInput.addEventListener('input', function() {
+            if (this.value && !this.value.includes('@')) {
+                resetEmailError.classList.add('show');
+            } else {
+                resetEmailError.classList.remove('show');
+            }
+        });
+
+        // Forgot Password Button
+        forgotPasswordBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            forgotForm.classList.add('active');
+            emailInfo.classList.remove('show');
+        });
+
+        // Back to Login Button
+        backToLoginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            forgotForm.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            resetEmailInput.value = '';
+            emailInfo.classList.remove('show');
+        });
+
+        // Forgot Password Form Submit
+        forgotFormElement.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = resetEmailInput.value;
+            if (email && email.includes('@')) {
+                emailInfo.textContent = `📧 A reset link has been sent to ${email}!`;
+                emailInfo.classList.add('show');
+                resetEmailInput.disabled = true;
+            }
+        });
+
+        // Login Form Submit
+        loginFormElement.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = emailInput.value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            if (email && email.includes('@')) {
+                alert(`Login submitted!\n\nEmail: ${email}\nRemember me: ${rememberMe ? 'Yes' : 'No'}`);
+            }
+        });
+    </script>
+</body>
+</html>
